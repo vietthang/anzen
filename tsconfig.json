@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "removeComments": false,
+    "declaration": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "forceConsistentCasingInFileNames": true,
+    "target": "es6",
+    "sourceMap": true,
+    "strict": true,
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "plugins": [{ "name": "typescript-tslint-plugin" }],
+    "skipLibCheck": true,
+    "resolveJsonModule": true
+  },
+  "exclude": ["node_modules", "dist", "test"]
+}

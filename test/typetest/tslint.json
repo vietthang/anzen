@@ -1,0 +1,11 @@
+{
+  "extends": [
+    "tslint-config-standard",
+    "tslint-config-prettier",
+    "dtslint/dtslint.json"
+  ],
+  "rules": {
+    "semicolon": [true, "never"],
+    "max-line-length": [true, 120]
+  }
+}
