@@ -1,4 +1,4 @@
-import { Constructor, ResolveType, SchemaLike } from './core'
+import { Constructor, ResolveType, SchemaLike, Thunk } from './core'
 import { defaultMetadataStore } from './metadataStore'
 import { SafePropertyDecorator } from './utils'
 
@@ -7,11 +7,17 @@ export const Schema = Object.assign(
     defaultMetadataStore.setSchemaClass(target)
   },
   {
-    Default: <T>(value: T) => {
+    Optional: <T extends unknown = undefined>(defaultValue?: Thunk<T>) => {
       return (classType: Constructor<T>) => {
-        defaultMetadataStore.addSchemaJoiTransformer(classType, schema =>
-          schema.default(value),
-        )
+        defaultMetadataStore.addSchemaJoiTransformer(classType, schema => {
+          if (defaultValue !== undefined) {
+            return schema
+              .optional()
+              .default(defaultValue)
+              .allow(defaultValue)
+          }
+          return schema.optional()
+        })
       }
     },
   },

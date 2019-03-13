@@ -312,7 +312,7 @@ describe('test non-schema class', () => {
 
 describe('test @Schema.Default', () => {
   @Schema()
-  @Schema.Default({ foo: 'bar' })
+  @Schema.Optional({ foo: 'bar' })
   class A {
     @Property(String)
     public foo!: string
