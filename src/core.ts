@@ -268,6 +268,13 @@ export const resolveSchema = cache(
   },
 )
 
+export const resolveInputSchema = cache(
+  (schema: SchemaLike): joi.ObjectSchema => {
+    // we need to wrap schema into object to allow validate undefined value by wrapping it into { input: undefined }
+    return joi.object({ input: resolveSchema(schema) })
+  },
+)
+
 function convertToClass(value: any, classType: Constructor): any {
   if (value instanceof classType) {
     return value
@@ -330,9 +337,8 @@ export function validate<T extends SchemaLike>(
     convert = true,
   }: ITransformOptions = {},
 ): ResolveType<T> {
-  const joiSchema = resolveSchema(schema)
-  const wrapJoiSchema = joi.object({ input: joiSchema.optional() }) // TODO maybe cache this
-  const result = wrapJoiSchema.validate(
+  const joiSchema = resolveInputSchema(schema)
+  const result = joiSchema.validate(
     { input },
     {
       allowUnknown,
