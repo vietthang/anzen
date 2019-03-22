@@ -238,7 +238,7 @@ export const resolveSchema = cache(
         return joi.number()
 
       case String:
-        return joi.string()
+        return joi.string().allow('')
 
       case Date:
         return joi.date()
