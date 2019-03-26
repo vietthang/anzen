@@ -138,6 +138,10 @@ export function Encoding(encoding: string) {
   return PropertyConfig<Buffer>(schema => schema.encoding(encoding))
 }
 
+export function Unique<T>(comparator?: (lhs: T, rhs: T) => boolean) {
+  return PropertyConfig<T[]>(schema => schema.unique(comparator))
+}
+
 export function Optional<T extends unknown = undefined>(
   defaultValue?: Thunk<T>,
 ) {
