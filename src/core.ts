@@ -2,6 +2,11 @@ import joi, { AnySchema } from 'joi'
 import { defaultMetadataStore } from './metadataStore'
 import { isClass } from './utils'
 
+// tslint:disable-next-line
+const joiPhoneNumberExtension = require('joi-phone-number')
+
+const extendedJoi: typeof joi = joi.extend(joiPhoneNumberExtension)
+
 const listSymbol = Symbol('List')
 
 export interface IListSchema<T extends unknown = unknown> {
@@ -223,7 +228,7 @@ function getClass(schema: SchemaLike): Constructor | undefined {
 
 export function resolveMaybeSchema(schema: SchemaLike | undefined): joi.Schema {
   if (!schema) {
-    return joi.any().optional()
+    return extendedJoi.any().optional()
   }
   return resolveSchema(schema)
 }
@@ -232,32 +237,36 @@ export const resolveSchema = cache(
   (resolvable: SchemaLike): joi.Schema => {
     switch (resolvable) {
       case Boolean:
-        return joi.boolean()
+        return extendedJoi.boolean()
 
       case Number:
-        return joi.number()
+        return extendedJoi.number()
 
       case String:
-        return joi.string().allow('')
+        return extendedJoi.string().allow('')
 
       case Date:
-        return joi.date()
+        return extendedJoi.date()
     }
 
     if (isBuffer(resolvable)) {
-      return joi.binary().encoding('base64')
+      return extendedJoi.binary().encoding('base64')
     }
 
     if (isList(resolvable)) {
-      return joi.array().items(resolveMaybeSchema(resolvable.schemaResolvable))
+      return extendedJoi
+        .array()
+        .items(resolveMaybeSchema(resolvable.schemaResolvable))
     }
 
     if (isTuple(resolvable)) {
-      return joi.array().ordered(resolvable.childSchemas.map(resolveSchema))
+      return extendedJoi
+        .array()
+        .ordered(resolvable.childSchemas.map(resolveSchema))
     }
 
     if (isEnum(resolvable)) {
-      return joi.only(Object.values(resolvable.enumObject))
+      return extendedJoi.only(Object.values(resolvable.enumObject))
     }
 
     if (isClass(resolvable)) {
@@ -271,7 +280,7 @@ export const resolveSchema = cache(
 export const resolveInputSchema = cache(
   (schema: SchemaLike): joi.ObjectSchema => {
     // we need to wrap schema into object to allow validate undefined value by wrapping it into { input: undefined }
-    return joi.object({ input: resolveSchema(schema) })
+    return extendedJoi.object({ input: resolveSchema(schema) })
   },
 )
 

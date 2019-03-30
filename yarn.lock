@@ -1368,6 +1368,11 @@ globals@^9.18.0:
   resolved "https://registry.yarnpkg.com/globals/-/globals-9.18.0.tgz#aa3896b3e69b487f17e31ed2143d69a8e30c2d8a"
   integrity sha512-S0nG3CLEQiY/ILxqtztTWH/3iRRdyBLw6KMDxnKMchrtbj2OFmehVh0WUCfW3DUrIgx/qFrJPICrq4Z4sTR9UQ==
 
+google-libphonenumber@3.2.2:
+  version "3.2.2"
+  resolved "https://registry.yarnpkg.com/google-libphonenumber/-/google-libphonenumber-3.2.2.tgz#3d9d7ba727e99a50812f21b0ed313723b76c5c54"
+  integrity sha512-ubjGeosYPeusjYbUHy76lCniGTTI0k1rIFc+uKBX+jHQLDmWOSUtlFUxaeoLJ+Y+PAMM6dWp+C1HjHx5BI8kEw==
+
 graceful-fs@^4.1.11, graceful-fs@^4.1.2, graceful-fs@^4.1.6:
   version "4.1.15"
   resolved "https://registry.yarnpkg.com/graceful-fs/-/graceful-fs-4.1.15.tgz#ffb703e1066e8a0eeaa4c8b80ba9253eeefbfb00"
@@ -2206,6 +2211,13 @@ jest@^23.5.0:
   dependencies:
     import-local "^1.0.0"
     jest-cli "^23.6.0"
+
+joi-phone-number@^2.1.1:
+  version "2.1.1"
+  resolved "https://registry.yarnpkg.com/joi-phone-number/-/joi-phone-number-2.1.1.tgz#96dc7dd29c81365b8d707173b9335a73714a89fe"
+  integrity sha512-b1aEe3iQfklS4jIL1pB+xkdmI/VWVO6FmP6TNtMdsYpGul0fcnXnPTrGJvrlAseoIuzct2atODW3jj6kfAktog==
+  dependencies:
+    google-libphonenumber "3.2.2"
 
 joi@^14.3.1:
   version "14.3.1"

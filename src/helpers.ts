@@ -8,7 +8,6 @@ import {
   StringRegexOptions,
   UriOptions,
 } from 'joi'
-
 import { Thunk } from './core'
 import { PropertyConfig } from './schemaConfig'
 
@@ -158,4 +157,13 @@ export function Optional<T extends unknown = undefined>(
 
 export function Allow<Args extends Array<unknown>>(...args: Args) {
   return PropertyConfig<Args[number]>(schema => schema.allow(args))
+}
+
+export function PhoneNumber(
+  defaultCountry?: string,
+  format?: 'e164' | 'international' | 'national' | 'rfc3966',
+) {
+  return PropertyConfig<string>(schema => {
+    return (schema as any).phoneNumber({ defaultCountry, format })
+  })
 }
