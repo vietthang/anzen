@@ -243,7 +243,7 @@ export const resolveSchema = cache(
         return extendedJoi.number()
 
       case String:
-        return extendedJoi.string().allow('')
+        return extendedJoi.string().empty('')
 
       case Date:
         return extendedJoi.date()
