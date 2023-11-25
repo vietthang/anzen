@@ -2,14 +2,9 @@ import joi, { AnySchema } from 'joi'
 import { defaultMetadataStore } from './metadataStore'
 import { isClass } from './utils'
 
-// tslint:disable-next-line
-const joiPhoneNumberExtension = require('joi-phone-number')
-
-const extendedJoi: typeof joi = joi.extend(joiPhoneNumberExtension)
-
 const listSymbol = Symbol('List')
 
-export interface IListSchema<T extends unknown = unknown> {
+export interface IListSchema<T = unknown> {
   symbol: typeof listSymbol
   _: T
   schemaResolvable: SchemaLike
@@ -53,7 +48,7 @@ export function Tuple<Resolvables extends [SchemaLike, ...SchemaLike[]]>(
 
 const enumSymbol = Symbol('Enum')
 
-export interface IEnumSchema<T extends unknown = unknown> {
+export interface IEnumSchema<T = unknown> {
   symbol: typeof enumSymbol
   _: T
   enumObject: any
@@ -74,7 +69,7 @@ export type Provider<T> = () => T
 
 export type Thunk<T> = T | Provider<T>
 
-export type Constructor<T extends unknown = unknown> = new (...args: any[]) => T
+export type Constructor<T = unknown> = new (...args: any[]) => T
 
 export type SchemaLike =
   | typeof Boolean
@@ -123,7 +118,7 @@ export type ResolveJoiSchemaType<T> = T extends boolean
   ? joi.ArraySchema
   : T extends object
   ? joi.ObjectSchema
-  : joi.AnySchema
+  : AnySchema
 
 type Transformer<T, U> = (value: T) => U
 
@@ -144,7 +139,7 @@ function cache<T extends object, U>(
 const classToSchema = cache(
   (ctor: Constructor): joi.Schema => {
     if (!defaultMetadataStore.isSchemaClass(ctor)) {
-      return joi.object().type(ctor)
+      return joi.object().instance(ctor)
     }
     const keys = defaultMetadataStore.keys(ctor)
     const schemaMap: joi.SchemaMap = {}
@@ -228,7 +223,7 @@ function getClass(schema: SchemaLike): Constructor | undefined {
 
 export function resolveMaybeSchema(schema: SchemaLike | undefined): joi.Schema {
   if (!schema) {
-    return extendedJoi.any().optional()
+    return joi.any().optional()
   }
   return resolveSchema(schema)
 }
@@ -237,36 +232,36 @@ export const resolveSchema = cache(
   (resolvable: SchemaLike): joi.Schema => {
     switch (resolvable) {
       case Boolean:
-        return extendedJoi.boolean()
+        return joi.boolean()
 
       case Number:
-        return extendedJoi.number()
+        return joi.number()
 
       case String:
-        return extendedJoi.string().empty('')
+        return joi.string().empty('')
 
       case Date:
-        return extendedJoi.date()
+        return joi.date()
     }
 
     if (isBuffer(resolvable)) {
-      return extendedJoi.binary().encoding('base64')
+      return joi.binary().encoding('base64')
     }
 
     if (isList(resolvable)) {
-      return extendedJoi
+      return joi
         .array()
         .items(resolveMaybeSchema(resolvable.schemaResolvable))
     }
 
     if (isTuple(resolvable)) {
-      return extendedJoi
+      return joi
         .array()
-        .ordered(resolvable.childSchemas.map(resolveSchema))
+        .ordered(...resolvable.childSchemas.map(resolveSchema))
     }
 
     if (isEnum(resolvable)) {
-      return extendedJoi.only(Object.values(resolvable.enumObject))
+      return joi.valid(...Object.values(resolvable.enumObject))
     }
 
     if (isClass(resolvable)) {
@@ -280,7 +275,7 @@ export const resolveSchema = cache(
 export const resolveInputSchema = cache(
   (schema: SchemaLike): joi.ObjectSchema => {
     // we need to wrap schema into object to allow validate undefined value by wrapping it into { input: undefined }
-    return extendedJoi.object({ input: resolveSchema(schema) })
+    return joi.object({ input: resolveSchema(schema) })
   },
 )
 

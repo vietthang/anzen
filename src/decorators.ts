@@ -7,7 +7,7 @@ export const Schema = Object.assign(
     defaultMetadataStore.setSchemaClass(target)
   },
   {
-    Optional: <T extends unknown = undefined>(defaultValue?: Thunk<T>) => {
+    Optional: <T = undefined>(defaultValue?: Thunk<T>) => {
       return (classType: Constructor<T>) => {
         defaultMetadataStore.addSchemaJoiTransformer(classType, schema => {
           if (defaultValue !== undefined) {

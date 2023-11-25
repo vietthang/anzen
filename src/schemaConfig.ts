@@ -2,11 +2,11 @@ import { Constructor, ResolveJoiSchemaType } from './core'
 import { defaultMetadataStore } from './metadataStore'
 import { SafePropertyDecorator } from './utils'
 
-export type JoiSchemaTransformer<T extends unknown> = (
+export type JoiSchemaTransformer<T> = (
   schema: ResolveJoiSchemaType<T>,
 ) => ResolveJoiSchemaType<T>
 
-export function PropertyConfig<T extends unknown = unknown>(
+export function PropertyConfig<T = unknown>(
   transformer: JoiSchemaTransformer<T>,
 ): SafePropertyDecorator<T> {
   return (target, key) => {

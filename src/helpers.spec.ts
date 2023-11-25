@@ -3,7 +3,7 @@ import 'jest'
 import 'reflect-metadata'
 import { validate } from './core'
 import { Property, Schema } from './decorators'
-import { Allow, Integer, Optional, PhoneNumber } from './helpers'
+import { Allow, Integer, Optional } from './helpers'
 
 describe('test @Integer', () => {
   @Schema()
@@ -118,20 +118,5 @@ describe('test @Allow', () => {
 
   it('should fail with empty value', () => {
     expect(() => validate({}, A)).toThrow()
-  })
-})
-
-describe('test @PhoneNumber', () => {
-  @Schema()
-  class A {
-    @PhoneNumber()
-    @Property(String)
-    public phoneNumber!: string
-  }
-
-  it('should success with string value', () => {
-    const a = validate({ phoneNumber: '+84908888888' }, A)
-    expect(a).toEqual({ phoneNumber: '+84908888888' })
-    expect(a).toBeInstanceOf(A)
   })
 })

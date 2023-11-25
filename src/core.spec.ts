@@ -46,7 +46,7 @@ describe('test basic types', () => {
         },
         A,
       ),
-    ).toThrowError()
+    ).toThrow()
   })
 
   it('should coerce string to other primitive types correctly', () => {

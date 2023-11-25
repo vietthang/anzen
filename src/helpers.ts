@@ -141,7 +141,7 @@ export function Unique<T>(comparator?: (lhs: T, rhs: T) => boolean) {
   return PropertyConfig<T[]>(schema => schema.unique(comparator))
 }
 
-export function Optional<T extends unknown = undefined>(
+export function Optional<T = undefined>(
   defaultValue?: Thunk<T>,
 ) {
   return PropertyConfig<T>(schema => {
@@ -151,19 +151,10 @@ export function Optional<T extends unknown = undefined>(
         .default(defaultValue)
         .allow(defaultValue)
     }
-    return schema.optional()
+    return schema.optional() as any
   })
 }
 
 export function Allow<Args extends Array<unknown>>(...args: Args) {
-  return PropertyConfig<Args[number]>(schema => schema.allow(args))
-}
-
-export function PhoneNumber(
-  defaultCountry?: string,
-  format?: 'e164' | 'international' | 'national' | 'rfc3966',
-) {
-  return PropertyConfig<string>(schema => {
-    return (schema as any).phoneNumber({ defaultCountry, format })
-  })
+  return PropertyConfig<Args[number]>(schema => schema.allow(...args))
 }
