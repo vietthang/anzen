@@ -23,6 +23,27 @@ export function List<T extends SchemaLike>(
   }
 }
 
+const recordSymbol = Symbol('Record')
+
+export interface IRecordSchema<T = unknown> {
+  symbol: typeof recordSymbol
+  _: T
+  schemaResolvable: SchemaLike
+}
+
+export function Record<T extends SchemaLike>(
+  schemaResolvable: T,
+): IRecordSchema<ResolveType<T>> {
+  return {
+    symbol: recordSymbol,
+    get _(): any {
+      /* istanbul ignore next */
+      throw new Error('static reference only')
+    },
+    schemaResolvable,
+  }
+}
+
 const tupleSymbol = Symbol('tuple')
 
 export interface ITupleSchema<
@@ -78,6 +99,7 @@ export type SchemaLike =
   | typeof Date
   | typeof Buffer
   | IListSchema
+  | IRecordSchema
   | ITupleSchema
   | IEnumSchema
   | Thunk<Constructor>
@@ -95,14 +117,16 @@ export type ResolveType<T> = T extends joi.Schema
           : T extends typeof Buffer
             ? Buffer
             : T extends IListSchema<infer U>
-              ? U[]
-              : T extends ITupleSchema<infer U>
-                ? U
-                : T extends IEnumSchema<infer U>
+              ? Array<U>
+              : T extends IRecordSchema<infer U>
+                ? Record<string, U>
+                : T extends ITupleSchema<infer U>
                   ? U
-                  : T extends Thunk<Constructor<infer U>>
+                  : T extends IEnumSchema<infer U>
                     ? U
-                    : never
+                    : T extends Thunk<Constructor<infer U>>
+                      ? U
+                      : never
 
 export type ResolveJoiSchemaType<T> = T extends boolean
   ? joi.BooleanSchema
@@ -116,9 +140,11 @@ export type ResolveJoiSchemaType<T> = T extends boolean
           ? joi.BinarySchema
           : T extends Array<unknown>
             ? joi.ArraySchema
-            : T extends object
+            : T extends Record<string, unknown>
               ? joi.ObjectSchema
-              : AnySchema
+              : T extends object
+                ? joi.ObjectSchema
+                : AnySchema
 
 type Transformer<T, U> = (value: T) => U
 
@@ -169,6 +195,12 @@ function isList(schemaResolvable: SchemaLike): schemaResolvable is IListSchema {
   return (schemaResolvable as IListSchema).symbol === listSymbol
 }
 
+function isRecord(
+  schemaResolvable: SchemaLike,
+): schemaResolvable is IRecordSchema {
+  return (schemaResolvable as IRecordSchema).symbol === recordSymbol
+}
+
 function isTuple(
   schemaResolvable: SchemaLike,
 ): schemaResolvable is ITupleSchema {
@@ -199,6 +231,10 @@ function getClass(schema: SchemaLike): Constructor | undefined {
   }
 
   if (isList(schema)) {
+    return undefined
+  }
+
+  if (isRecord(schema)) {
     return undefined
   }
 
@@ -245,6 +281,12 @@ export const resolveSchema = cache((resolvable: SchemaLike): joi.Schema => {
 
   if (isList(resolvable)) {
     return joi.array().items(resolveMaybeSchema(resolvable.schemaResolvable))
+  }
+
+  if (isRecord(resolvable)) {
+    return joi
+      .object()
+      .pattern(joi.string(), resolveMaybeSchema(resolvable.schemaResolvable))
   }
 
   if (isTuple(resolvable)) {

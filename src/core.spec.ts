@@ -2,7 +2,7 @@
 import 'jest'
 import 'reflect-metadata'
 
-import { Enum, List, Tuple, validate } from './core'
+import { Enum, List, Record, Tuple, validate } from './core'
 import { Property, Schema } from './decorators'
 
 describe('test basic types', () => {
@@ -126,6 +126,60 @@ describe('test array', () => {
 
   it('should fail with an invalid array type', () => {
     expect(() => validate({ stringValues: [1] }, A)).toThrowError()
+  })
+})
+
+describe('test record', () => {
+  @Schema()
+  class A {
+    @Property(Record(String))
+    public stringValues!: Record<string, string>
+  }
+  it('should success with correct record', () => {
+    const a = validate({ stringValues: { foo: 'foo' } }, A)
+    expect(a).toEqual({ stringValues: { foo: 'foo' } })
+  })
+
+  it('should success with an empty record', () => {
+    const a = validate({ stringValues: {} }, A)
+    expect(a).toEqual({ stringValues: {} })
+  })
+
+  it('should fail with an invalid array type', () => {
+    expect(() => validate({ stringValues: { foo: 1 } }, A)).toThrow()
+  })
+})
+
+describe('test record with nested', () => {
+  @Schema()
+  class Nested {
+    @Property(String)
+    public stringValue!: string
+  }
+
+  @Schema()
+  class A {
+    @Property(Record(Nested))
+    public values!: Record<string, Nested>
+  }
+  it('should success with correct record', () => {
+    const a = validate({ values: { foo: { stringValue: 'foo' } } }, A)
+    expect(a).toEqual({ values: { foo: { stringValue: 'foo' } } })
+  })
+
+  it('should success with incorrect record', () => {
+    expect(() => validate({ values: { foo: { invalid: 'foo' } } }, A)).toThrow(
+      '"input.values.foo.stringValue" is required',
+    )
+
+    expect(() => validate({ values: { foo: { stringValue: [] } } }, A)).toThrow(
+      '"input.values.foo.stringValue" must be a string',
+    )
+  })
+
+  it('should success with an empty record', () => {
+    const a = validate({ values: {} }, A)
+    expect(a).toEqual({ values: {} })
   })
 })
 
