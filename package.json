@@ -1,6 +1,6 @@
 {
   "name": "anzenjs",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Joi-powered type-safe decorator library to ensure runtime type safe",
   "license": "MIT",
   "scripts": {
