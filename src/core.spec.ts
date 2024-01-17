@@ -2,7 +2,7 @@
 import 'jest'
 import 'reflect-metadata'
 
-import { Enum, List, Record, Tuple, validate } from './core'
+import { Enum, List, Record, Tuple, Unknown, validate } from './core'
 import { Property, Schema } from './decorators'
 
 describe('test basic types', () => {
@@ -95,7 +95,24 @@ describe('test Any', () => {
   @Schema()
   class A {
     @Property()
-    public anyValue: any
+    public anyValue: unknown
+  }
+
+  it('should success with every value', () => {
+    const values = [null, undefined, 1, 1.1, new Date(), 'foo', Buffer.alloc(0)]
+    for (const value of values) {
+      const a = validate({ anyValue: value }, A)
+      expect(a).toBeInstanceOf(A)
+      expect(a).toEqual({ anyValue: value })
+    }
+  })
+})
+
+describe('test Unknown', () => {
+  @Schema()
+  class A {
+    @Property(Unknown)
+    public anyValue: unknown
   }
 
   it('should success with every value', () => {

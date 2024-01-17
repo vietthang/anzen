@@ -92,7 +92,23 @@ export type Thunk<T> = T | Provider<T>
 
 export type Constructor<T = unknown> = new (...args: any[]) => T
 
+const unknownSymbol = Symbol('Unknown')
+
+export interface IUnknownSchema<T = unknown> {
+  symbol: typeof unknownSymbol
+  _: T
+}
+
+export const Unknown: IUnknownSchema = {
+  symbol: unknownSymbol,
+  get _(): any {
+    /* istanbul ignore next */
+    throw new Error('static reference only')
+  },
+}
+
 export type SchemaLike =
+  | typeof Unknown
   | typeof Boolean
   | typeof Number
   | typeof String
@@ -106,27 +122,29 @@ export type SchemaLike =
 
 export type ResolveType<T> = T extends joi.Schema
   ? unknown
-  : T extends typeof Boolean
-    ? boolean
-    : T extends typeof Number
-      ? number
-      : T extends typeof String
-        ? string
-        : T extends typeof Date
-          ? Date
-          : T extends typeof Buffer
-            ? Buffer
-            : T extends IListSchema<infer U>
-              ? Array<U>
-              : T extends IRecordSchema<infer U>
-                ? Record<string, U>
-                : T extends ITupleSchema<infer U>
-                  ? U
-                  : T extends IEnumSchema<infer U>
+  : T extends typeof Unknown
+    ? unknown
+    : T extends typeof Boolean
+      ? boolean
+      : T extends typeof Number
+        ? number
+        : T extends typeof String
+          ? string
+          : T extends typeof Date
+            ? Date
+            : T extends typeof Buffer
+              ? Buffer
+              : T extends IListSchema<infer U>
+                ? Array<U>
+                : T extends IRecordSchema<infer U>
+                  ? Record<string, U>
+                  : T extends ITupleSchema<infer U>
                     ? U
-                    : T extends Thunk<Constructor<infer U>>
+                    : T extends IEnumSchema<infer U>
                       ? U
-                      : never
+                      : T extends Thunk<Constructor<infer U>>
+                        ? U
+                        : never
 
 export type ResolveJoiSchemaType<T> = T extends boolean
   ? joi.BooleanSchema
@@ -191,6 +209,12 @@ const classToSchema = cache((ctor: Constructor): joi.Schema => {
   return classJoiSchema
 })
 
+function isUnknown(
+  schemaResolvable: SchemaLike,
+): schemaResolvable is IUnknownSchema {
+  return (schemaResolvable as IUnknownSchema).symbol === unknownSymbol
+}
+
 function isList(schemaResolvable: SchemaLike): schemaResolvable is IListSchema {
   return (schemaResolvable as IListSchema).symbol === listSymbol
 }
@@ -224,6 +248,10 @@ function getClass(schema: SchemaLike): Constructor | undefined {
     case String:
     case Date:
       return undefined
+  }
+
+  if (isUnknown(schema)) {
+    return undefined
   }
 
   if (isBuffer(schema)) {
@@ -273,6 +301,10 @@ export const resolveSchema = cache((resolvable: SchemaLike): joi.Schema => {
 
     case Date:
       return joi.date()
+  }
+
+  if (isUnknown(resolvable)) {
+    return joi.any().optional()
   }
 
   if (isBuffer(resolvable)) {
@@ -345,6 +377,13 @@ function transformClass(value: any, schema: SchemaLike | undefined): any {
     return (value as any[]).map((item) =>
       transformClass(item, schema.schemaResolvable),
     )
+  }
+
+  if (isRecord(schema)) {
+    const entries = Object.keys(value).map((key) => {
+      return [key, transformClass(value[key], schema.schemaResolvable)]
+    })
+    return Object.fromEntries(entries)
   }
 
   if (isTuple(schema)) {
