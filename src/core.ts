@@ -26,7 +26,7 @@ export function List<T extends SchemaLike>(
 const tupleSymbol = Symbol('tuple')
 
 export interface ITupleSchema<
-  Args extends [unknown, ...Array<unknown>] = [unknown, ...Array<unknown>]
+  Args extends [unknown, ...Array<unknown>] = [unknown, ...Array<unknown>],
 > {
   symbol: typeof tupleSymbol
   _: Args
@@ -85,40 +85,40 @@ export type SchemaLike =
 export type ResolveType<T> = T extends joi.Schema
   ? unknown
   : T extends typeof Boolean
-  ? boolean
-  : T extends typeof Number
-  ? number
-  : T extends typeof String
-  ? string
-  : T extends typeof Date
-  ? Date
-  : T extends typeof Buffer
-  ? Buffer
-  : T extends IListSchema<infer U>
-  ? U[]
-  : T extends ITupleSchema<infer U>
-  ? U
-  : T extends IEnumSchema<infer U>
-  ? U
-  : T extends Thunk<Constructor<infer U>>
-  ? U
-  : never
+    ? boolean
+    : T extends typeof Number
+      ? number
+      : T extends typeof String
+        ? string
+        : T extends typeof Date
+          ? Date
+          : T extends typeof Buffer
+            ? Buffer
+            : T extends IListSchema<infer U>
+              ? U[]
+              : T extends ITupleSchema<infer U>
+                ? U
+                : T extends IEnumSchema<infer U>
+                  ? U
+                  : T extends Thunk<Constructor<infer U>>
+                    ? U
+                    : never
 
 export type ResolveJoiSchemaType<T> = T extends boolean
   ? joi.BooleanSchema
   : T extends number
-  ? joi.NumberSchema
-  : T extends string
-  ? joi.StringSchema
-  : T extends Date
-  ? joi.DateSchema
-  : T extends Buffer
-  ? joi.BinarySchema
-  : T extends Array<unknown>
-  ? joi.ArraySchema
-  : T extends object
-  ? joi.ObjectSchema
-  : AnySchema
+    ? joi.NumberSchema
+    : T extends string
+      ? joi.StringSchema
+      : T extends Date
+        ? joi.DateSchema
+        : T extends Buffer
+          ? joi.BinarySchema
+          : T extends Array<unknown>
+            ? joi.ArraySchema
+            : T extends object
+              ? joi.ObjectSchema
+              : AnySchema
 
 type Transformer<T, U> = (value: T) => U
 
@@ -136,38 +136,34 @@ function cache<T extends object, U>(
   }
 }
 
-const classToSchema = cache(
-  (ctor: Constructor): joi.Schema => {
-    if (!defaultMetadataStore.isSchemaClass(ctor)) {
-      return joi.object().instance(ctor)
-    }
-    const keys = defaultMetadataStore.keys(ctor)
-    const schemaMap: joi.SchemaMap = {}
-    for (const key of keys) {
-      const schema = defaultMetadataStore.getPropertySchema(ctor, key)
-      let joiSchema = resolveMaybeSchema(schema)
-      const transformers = defaultMetadataStore.getPropertyJoiTransformers(
-        ctor,
-        key,
-      )
-      joiSchema = transformers.reduce(
-        (prev, transformer) => transformer(prev),
-        joiSchema,
-      )
-
-      schemaMap[key] = joiSchema
-    }
-
-    let classJoiSchema: AnySchema = joi.object(schemaMap)
-    const schemaTransformers = defaultMetadataStore.getSchemaJoiTransformers(
+const classToSchema = cache((ctor: Constructor): joi.Schema => {
+  if (!defaultMetadataStore.isSchemaClass(ctor)) {
+    return joi.object().instance(ctor)
+  }
+  const keys = defaultMetadataStore.keys(ctor)
+  const schemaMap: joi.SchemaMap = {}
+  for (const key of keys) {
+    const schema = defaultMetadataStore.getPropertySchema(ctor, key)
+    let joiSchema = resolveMaybeSchema(schema)
+    const transformers = defaultMetadataStore.getPropertyJoiTransformers(
       ctor,
+      key,
     )
-    for (const transformer of schemaTransformers) {
-      classJoiSchema = transformer(classJoiSchema)
-    }
-    return classJoiSchema
-  },
-)
+    joiSchema = transformers.reduce(
+      (prev, transformer) => transformer(prev),
+      joiSchema,
+    )
+
+    schemaMap[key] = joiSchema
+  }
+
+  let classJoiSchema: AnySchema = joi.object(schemaMap)
+  const schemaTransformers = defaultMetadataStore.getSchemaJoiTransformers(ctor)
+  for (const transformer of schemaTransformers) {
+    classJoiSchema = transformer(classJoiSchema)
+  }
+  return classJoiSchema
+})
 
 function isList(schemaResolvable: SchemaLike): schemaResolvable is IListSchema {
   return (schemaResolvable as IListSchema).symbol === listSymbol
@@ -228,49 +224,43 @@ export function resolveMaybeSchema(schema: SchemaLike | undefined): joi.Schema {
   return resolveSchema(schema)
 }
 
-export const resolveSchema = cache(
-  (resolvable: SchemaLike): joi.Schema => {
-    switch (resolvable) {
-      case Boolean:
-        return joi.boolean()
+export const resolveSchema = cache((resolvable: SchemaLike): joi.Schema => {
+  switch (resolvable) {
+    case Boolean:
+      return joi.boolean()
 
-      case Number:
-        return joi.number()
+    case Number:
+      return joi.number()
 
-      case String:
-        return joi.string().empty('')
+    case String:
+      return joi.string().allow('')
 
-      case Date:
-        return joi.date()
-    }
+    case Date:
+      return joi.date()
+  }
 
-    if (isBuffer(resolvable)) {
-      return joi.binary().encoding('base64')
-    }
+  if (isBuffer(resolvable)) {
+    return joi.binary().encoding('base64')
+  }
 
-    if (isList(resolvable)) {
-      return joi
-        .array()
-        .items(resolveMaybeSchema(resolvable.schemaResolvable))
-    }
+  if (isList(resolvable)) {
+    return joi.array().items(resolveMaybeSchema(resolvable.schemaResolvable))
+  }
 
-    if (isTuple(resolvable)) {
-      return joi
-        .array()
-        .ordered(...resolvable.childSchemas.map(resolveSchema))
-    }
+  if (isTuple(resolvable)) {
+    return joi.array().ordered(...resolvable.childSchemas.map(resolveSchema))
+  }
 
-    if (isEnum(resolvable)) {
-      return joi.valid(...Object.values(resolvable.enumObject))
-    }
+  if (isEnum(resolvable)) {
+    return joi.valid(...Object.values(resolvable.enumObject))
+  }
 
-    if (isClass(resolvable)) {
-      return classToSchema(resolvable)
-    }
+  if (isClass(resolvable)) {
+    return classToSchema(resolvable)
+  }
 
-    return resolveMaybeSchema(resolvable())
-  },
-)
+  return resolveMaybeSchema(resolvable())
+})
 
 export const resolveInputSchema = cache(
   (schema: SchemaLike): joi.ObjectSchema => {
@@ -310,7 +300,7 @@ function transformClass(value: any, schema: SchemaLike | undefined): any {
   }
 
   if (isList(schema)) {
-    return (value as any[]).map(item =>
+    return (value as any[]).map((item) =>
       transformClass(item, schema.schemaResolvable),
     )
   }
